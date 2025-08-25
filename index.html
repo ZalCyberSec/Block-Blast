@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Blast Premium - Drag & Place</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            width: 95%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .premium-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52, #ff9ff3);
+            border-radius: 15px;
+            margin: -20px -20px 30px -20px;
+        }
+
+        .premium-header h1 {
+            font-size: 2.8em;
+            font-weight: bold;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.5);
+            margin: 0;
+        }
+
+        .premium-header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .score-board, .level-board {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+            padding: 15px 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            min-width: 120px;
+        }
+
+        .score-label, .level-label {
+            font-size: 16px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-value, .level-value {
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .blocks-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .blocks-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .available-blocks {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .available-block {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            cursor: grab;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+        }
+
+        .available-block:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .available-block.dragging {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+
+        .available-block.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: scale(0.9);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            min-height: 400px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .grid-cell.hovered {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .grid-cell.placed {
+            border: none;
+            background: none;
+        }
+
+        .block {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .block.gem-effect {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(5px);
+        }
+
+        .block.selected {
+            animation: pulse-luxury 0.6s infinite;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .block.matched {
+            animation: explode-luxury 0.8s ease-out forwards;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .premium-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52, #ff9ff3);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+        }
+
+        .premium-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .premium-btn:hover::before {
+            left: 100%;
+        }
+
+        .premium-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .menu-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .menu-content, .game-over-content {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 25px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            animation: floatUp-luxury 1.2s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 10;
+        }
+
+        @keyframes pulse-luxury {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            }
+            50% { 
+                transform: scale(1.15);
+                box-shadow: 0 0 40px rgba(255, 255, 255, 0.8), 0 0 80px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        @keyframes explode-luxury {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.8);
+                opacity: 0.7;
+                filter: brightness(1.5);
+            }
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+                filter: brightness(2);
+            }
+        }
+
+        @keyframes floatUp-luxury {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                filter: blur(0);
+            }
+            100% {
+                transform: translateY(-80px) scale(1.5);
+                opacity: 0;
+                filter: blur(5px);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleAnim-luxury 1.2s ease-out forwards;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes particleAnim-luxury {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+                filter: blur(0);
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1.5);
+                opacity: 0;
+                filter: blur(2px);
+            }
+        }
+
+        .difficulty-select {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .difficulty-btn.active {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .tutorial {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .tutorial h3 {
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+
+        .block-counter {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .block-count {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .game-status {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="premium-header">
+            <h1>BLOCK BLAST PREMIUM</h1>
+            <p>Drag & Place Luxury Blocks</p>
+        </div>
+
+        <div class="header">
+            <div class="score-board">
+                <div class="score-label">SCORE</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="level-board">
+                <div class="level-label">LEVEL</div>
+                <div class="level-value" id="level">1</div>
+            </div>
+        </div>
+
+        <div class="game-status" id="gameStatus">Drag blocks from below to the grid</div>
+
+        <div class="blocks-container">
+            <div class="blocks-title">AVAILABLE BLOCKS</div>
+            <div class="available-blocks" id="availableBlocks">
+                <!-- Blocks will be generated here -->
+            </div>
+        </div>
+
+        <div class="tutorial">
+            <h3>CARA MAIN:</h3>
+            <p>1. Drag blok dari kotak AVAILABLE BLOCKS</p>
+            <p>2. Taruh di grid sesuai keinginan</p>
+            <p>3. Klik blok yang sama untuk menghapusnya (minimal 3 blok sama)</p>
+            <p>4. Dapatkan score tinggi!</p>
+        </div>
+
+        <div class="game-grid" id="gameGrid">
+            <!-- Grid cells will be generated here -->
+        </div>
+
+        <div class="controls">
+            <button class="premium-btn" id="shuffleBtn">Acak Grid</button>
+            <button class="premium-btn" id="newGameBtn">Game Baru</button>
+        </div>
+    </div>
+
+    <div class="menu-screen" id="menuScreen">
+        <div class="menu-content">
+            <h1>BLOCK BLAST PREMIUM</h1>
+            <p>Taruh blok mewah dan buat kombinasi spektakuler!</p>
+            <div class="difficulty-select">
+                <button class="difficulty-btn active" data-difficulty="mudah">Mudah</button>
+                <button class="difficulty-btn" data-difficulty="sedang">Sedang</button>
+                <button class="difficulty-btn" data-difficulty="sulit">Sulit</button>
+            </div>
+            <button class="premium-btn" id="startGameBtn">Mulai Game</button>
+        </div>
+    </div>
+
+    <div class="game-over-screen" id="gameOverScreen" style="display: none;">
+        <div class="game-over-content">
+            <h2>GAME SELESAI</h2>
+            <p>Score akhir: <span id="finalScore">0</span></p>
+            <p>Level: <span id="finalLevel">1</span></p>
+            <p>Total match: <span id="finalMatches">0</span></p>
+            <button class="premium-btn" id="restartBtn">Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        class BlockBlastPremium {
+            constructor() {
+                this.gridSize = 8;
+                this.colors = ['#ff6b6b', '#48dbfb', '#1dd1a1', '#feca57', '#54a0ff', '#ff9ff3'];
+                this.colorNames = ['Ruby', 'Sapphire', 'Emerald', 'Gold', 'Diamond', 'Amethyst'];
+                this.grid = [];
+                this.score = 0;
+                this.level = 1;
+                this.gameActive = false;
+                this.matchesMade = 0;
+                this.selectedBlocks = [];
+                this.difficulty = 'mudah';
+                this.availableBlocks = [];
+                this.usedBlocks = new Set();
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.showMenu();
+            }
+
+            initializeElements() {
+                this.gameGrid = document.getElementById('gameGrid');
+                this.availableBlocksContainer = document.getElementById('availableBlocks');
+                this.scoreDisplay = document.getElementById('score');
+                this.levelDisplay = document.getElementById('level');
+                this.gameStatus = document.getElementById('gameStatus');
+                this.menuScreen = document.getElementById('menuScreen');
+                this.gameOverScreen = document.getElementById('gameOverScreen');
+                this.finalScoreDisplay = document.getElementById('finalScore');
+                this.finalLevelDisplay = document.getElementById('finalLevel');
+                this.finalMatchesDisplay = document.getElementById('finalMatches');
+            }
+
+            bindEvents() {
+                document.getElementById('startGameBtn').addEventListener('click', () => this.startGame());
+                document.getElementById('restartBtn').addEventListener('click', () => this.startGame());
+                document.getElementById('shuffleBtn').addEventListener('click', () => this.shuffleGrid());
+                document.getElementById('newGameBtn').addEventListener('click', () => this.showMenu());
+                
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.difficulty = e.target.dataset.difficulty;
+                    });
+                });
+            }
+
+            showMenu() {
+                this.gameActive = false;
+                this.menuScreen.style.display = 'flex';
+                this.gameOverScreen.style.display = 'none';
+            }
+
+            startGame() {
+                this.score = 0;
+                this.level = 1;
+                this.matchesMade = 0;
+                this.gameActive = true;
+                this.usedBlocks.clear();
+                this.menuScreen.style.display = 'none';
+                this.gameOverScreen.style.display = 'none';
+                
+                this.updateUI();
+                this.generateGrid();
+                this.generateAvailableBlocks();
+                this.updateGameStatus('Drag blok dari bawah ke grid!');
+                this.animateGameStart();
+            }
+
+            generateGrid() {
+                this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(-1));
+                this.gameGrid.innerHTML = '';
+                
+                // Create empty grid cells
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        
+                        // Add drag and drop events
+                        cell.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            if (this.gameActive) cell.classList.add('hovered');
+                        });
+                        
+                        cell.addEventListener('dragleave', () => {
+                            cell.classList.remove('hovered');
+                        });
+                        
+                        cell.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            cell.classList.remove('hovered');
+                            if (this.gameActive) {
+                                const blockId = e.dataTransfer.getData('blockId');
+                                const colorIndex = parseInt(e.dataTransfer.getData('colorIndex'));
+                                this.placeBlock(x, y, colorIndex, blockId);
+                            }
+                        });
+                        
+                        this.gameGrid.appendChild(cell);
+                    }
+                }
+            }
+
+            generateAvailableBlocks() {
+                this.availableBlocksContainer.innerHTML = '';
+                this.availableBlocks = [];
+                
+                // Generate fixed luxury blocks (3 of each color)
+                const blocksToCreate = [];
+                for (let i = 0; i < 3; i++) {
+                    for (let colorIndex = 0; colorIndex < this.colors.length; colorIndex++) {
+                        blocksToCreate.push(colorIndex);
+                    }
+                }
+                
+                // Shuffle the blocks
+                for (let i = blocksToCreate.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [blocksToCreate[i], blocksToCreate[j]] = [blocksToCreate[j], blocksToCreate[i]];
+                }
+                
+                // Create the blocks
+                blocksToCreate.forEach((colorIndex, index) => {
+                    const blockId = `block-${index}`;
+                    this.availableBlocks.push({ id: blockId, colorIndex, used: false });
+                    
+                    const block = document.createElement('div');
+                    block.id = blockId;
+                    block.className = 'available-block';
+                    block.style.background = `linear-gradient(135deg, ${this.colors[colorIndex]}, ${this.darkenColor(this.colors[colorIndex])})`;
+                    block.dataset.colorIndex = colorIndex;
+                    block.draggable = true;
+                    block.innerHTML = this.colorNames[colorIndex].charAt(0);
+                    
+                    // Add drag events
+                    block.addEventListener('dragstart', (e) => {
+                        if (this.gameActive && !this.usedBlocks.has(blockId)) {
+                            e.dataTransfer.setData('blockId', blockId);
+                            e.dataTransfer.setData('colorIndex', colorIndex);
+                            block.classList.add('dragging');
+                        } else {
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    block.addEventListener('dragend', () => {
+                        block.classList.remove('dragging');
+                    });
+                    
+                    this.availableBlocksContainer.appendChild(block);
+                });
+            }
+
+            placeBlock(x, y, colorIndex, blockId) {
+                if (this.grid[y][x] !== -1 || this.usedBlocks.has(blockId)) return;
+                
+                this.grid[y][x] = colorIndex;
+                this.usedBlocks.add(blockId);
+                
+                const cell = this.gameGrid.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                cell.classList.add('placed');
+                
+                // Mark the available block as used
+                const availableBlock = document.getElementById(blockId);
+                if (availableBlock) {
+                    availableBlock.classList.add('used');
+                }
+                
+                // Create luxury block on grid
+                const block = document.createElement('div');
+                block.className = 'block gem-effect';
+                block.style.background = `linear-gradient(135deg, ${this.colors[colorIndex]}, ${this.darkenColor(this.colors[colorIndex])})`;
+                block.innerHTML = this.colorNames[colorIndex].charAt(0);
+                block.dataset.x = x;
+                block.dataset.y = y;
+                
+                // Add click event for matching
+                block.addEventListener('click', () => this.handleBlockClick(x, y));
+                
+                // Animation for placement
+                block.style.transform = 'scale(0) rotate(180deg)';
+                block.style.opacity = '0';
+                cell.appendChild(block);
+                
+                setTimeout(() => {
+                    block.style.transition = 'all 0.5s ease';
+                    block.style.transform = 'scale(1) rotate(0deg)';
+                    block.style.opacity = '1';
+                }, 50);
+                
+                this.updateUI();
+                this.updateGameStatus('Klik blok untuk membuat match!');
+                
+                // Check if all blocks are placed
+                this.checkGameProgress();
+            }
+
+            handleBlockClick(x, y) {
+                if (!this.gameActive || this.grid[y][x] === -1) return;
+                
+                const colorIndex = this.grid[y][x];
+                const connected = this.findConnectedBlocks(x, y, colorIndex);
+                
+                if (connected.length >= 3) {
+                    this.selectedBlocks = connected;
+                    this.highlightSelectedBlocks(true);
+                    
+                    setTimeout(() => {
+                        this.clearSelectedBlocks();
+                        this.highlightSelectedBlocks(false);
+                        this.collapseGrid();
+                        this.checkLevelUp();
+                        this.updateGameStatus('Bagus! Lanjutkan...');
+                    }, 400);
+                } else if (connected.length > 0) {
+                    this.updateGameStatus('Butuh minimal 3 blok sama untuk match!');
+                }
+            }
+
+            findConnectedBlocks(x, y, targetColor, visited = new Set()) {
+                const key = `${x},${y}`;
+                if (visited.has(key) || x < 0 || x >= this.gridSize || y < 0 || y >= this.gridSize || this.grid[y][x] !== targetColor) {
+                    return [];
+                }
+                
+                visited.add(key);
+                let connected = [{x, y}];
+                
+                const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                directions.forEach(([dx, dy]) => {
+                    connected = connected.concat(this.findConnectedBlocks(x + dx, y + dy, targetColor, visited));
+                });
+                
+                return connected;
+            }
+
+            highlightSelectedBlocks(highlight) {
+                this.selectedBlocks.forEach(({x, y}) => {
+                    const block = this.getBlockElement(x, y);
+                    if (block) {
+                        block.classList.toggle('selected', highlight);
+                    }
+                });
+            }
+
+            clearSelectedBlocks() {
+                const comboSize = this.selectedBlocks.length;
+                const basePoints = comboSize * 50;
+                const multiplier = Math.min(8, Math.floor(comboSize / 2));
+                const points = basePoints * multiplier;
+                
+                this.score += points;
+                this.matchesMade++;
+                this.updateUI();
+                
+                // Create combo text effect
+                if (this.selectedBlocks.length > 0) {
+                    const firstBlock = this.getBlockElement(this.selectedBlocks[0].x, this.selectedBlocks[0].y);
+                    const rect = firstBlock.getBoundingClientRect();
+                    
+                    const comboText = document.createElement('div');
+                    comboText.className = 'combo-indicator';
+                    comboText.textContent = `+${points}`;
+                    comboText.style.left = rect.left + rect.width / 2 + 'px';
+                    comboText.style.top = rect.top + 'px';
+                    document.body.appendChild(comboText);
+                    
+                    setTimeout(() => comboText.remove(), 1200);
+                }
+                
+                // Create particle effects
+                this.createLuxuryParticles(this.selectedBlocks);
+                
+                this.selectedBlocks.forEach(({x, y}) => {
+                    const block = this.getBlockElement(x, y);
+                    if (block) {
+                        block.classList.add('matched');
+                        this.grid[y][x] = -1;
+                    }
+                });
+                
+                setTimeout(() => {
+                    this.selectedBlocks.forEach(({x, y}) => {
+                        const cell = this.gameGrid.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                        if (cell) {
+                            cell.innerHTML = '';
+                            cell.classList.remove('placed');
+                        }
+                    });
+                }, 800);
+            }
+
+            createLuxuryParticles(blocks) {
+                blocks.forEach(({x, y}) => {
+                    const block = this.getBlockElement(x, y);
+                    if (block) {
+                        const rect = block.getBoundingClientRect();
+                        const colorIndex = this.grid[y][x];
+                        const color = this.colors[colorIndex];
+                        
+                        for (let i = 0; i < 8; i++) {
+                            const particle = document.createElement('div');
+                            particle.className = 'particle';
+                            particle.style.background = color;
+                            particle.style.left = rect.left + rect.width / 2 + 'px';
+                            particle.style.top = rect.top + rect.height / 2 + 'px';
+                            particle.style.width = Math.random() * 15 + 8 + 'px';
+                            particle.style.height = particle.style.width;
+                            
+                            const angle = Math.random() * Math.PI * 2;
+                            const distance = Math.random() * 150 + 100;
+                            particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                            particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+                            
+                            document.body.appendChild(particle);
+                            setTimeout(() => particle.remove(), 1200);
+                        }
+                    }
+                });
+            }
+
+            collapseGrid() {
+                // Move blocks down
+                for (let x = 0; x < this.gridSize; x++) {
+                    let emptySpots = 0;
+                    for (let y = this.gridSize - 1; y >= 0; y--) {
+                        if (this.grid[y][x] === -1) {
+                            emptySpots++;
+                        } else if (emptySpots > 0) {
+                            this.grid[y + emptySpots][x] = this.grid[y][x];
+                            this.grid[y][x] = -1;
+                            
+                            // Move block visually
+                            const block = this.getBlockElement(x, y);
+                            if (block) {
+                                const cell = this.gameGrid.querySelector(`[data-x="${x}"][data-y="${y + emptySpots}"]`);
+                                cell.classList.add('placed');
+                                cell.appendChild(block);
+                                block.dataset.y = y + emptySpots;
+                                
+                                // Animation
+                                block.style.transition = 'transform 0.5s ease';
+                                block.style.transform = `translateY(${emptySpots * 100}%)`;
+                                
+                                setTimeout(() => {
+                                    block.style.transform = 'translateY(0)';
+                                }, 50);
+                            }
+                        }
+                    }
+                }
+                
+                setTimeout(() => this.updateVisualGrid(), 600);
+            }
+
+            updateVisualGrid() {
+                const cells = this.gameGrid.querySelectorAll('.grid-cell');
+                cells.forEach(cell => {
+                    const x = parseInt(cell.dataset.x);
+                    const y = parseInt(cell.dataset.y);
+                    
+                    if (this.grid[y][x] === -1 && cell.classList.contains('placed')) {
+                        cell.innerHTML = '';
+                        cell.classList.remove('placed');
+                    }
+                });
+            }
+
+            getBlockElement(x, y) {
+                return this.gameGrid.querySelector(`[data-x="${x}"][data-y="${y}"] .block`);
+            }
+
+            shuffleGrid() {
+                if (!this.gameActive) return;
+                
+                // Get all placed blocks
+                const placedBlocks = [];
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (this.grid[y][x] !== -1) {
+                            placedBlocks.push({
+                                x, y,
+                                color: this.grid[y][x],
+                                element: this.getBlockElement(x, y)
+                            });
+                            this.grid[y][x] = -1;
+                        }
+                    }
+                }
+                
+                // Clear grid visually
+                const cells = this.gameGrid.querySelectorAll('.grid-cell');
+                cells.forEach(cell => {
+                    cell.innerHTML = '';
+                    cell.classList.remove('placed');
+                });
+                
+                // Shuffle and place blocks
+                for (let i = placedBlocks.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [placedBlocks[i], placedBlocks[j]] = [placedBlocks[j], placedBlocks[i]];
+                }
+                
+                // Reassign shuffled blocks
+                placedBlocks.forEach((block, index) => {
+                    const x = index % this.gridSize;
+                    const y = Math.floor(index / this.gridSize);
+                    
+                    this.grid[y][x] = block.color;
+                    const cell = this.gameGrid.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                    cell.classList.add('placed');
+                    
+                    if (block.element) {
+                        cell.appendChild(block.element);
+                        block.element.dataset.x = x;
+                        block.element.dataset.y = y;
+                        
+                        // Animation
+                        block.element.style.transform = 'rotate(360deg) scale(1.2)';
+                        setTimeout(() => {
+                            block.element.style.transition = 'all 0.5s ease';
+                            block.element.style.transform = 'rotate(0deg) scale(1)';
+                        }, 100);
+                    }
+                });
+                
+                this.updateGameStatus('Grid diacak! Lanjutkan permainan.');
+            }
+
+            checkLevelUp() {
+                const pointsNeeded = this.level * 2000;
+                if (this.score >= pointsNeeded) {
+                    this.level++;
+                    this.updateUI();
+                    this.updateGameStatus(`Level up! Sekarang Level ${this.level}`);
+                    
+                    // Level up animation
+                    const levelDisplay = document.getElementById('level');
+                    levelDisplay.style.animation = 'pulse-luxury 0.8s';
+                    setTimeout(() => {
+                        levelDisplay.style.animation = '';
+                    }, 800);
+                }
+            }
+
+            checkGameProgress() {
+                // Check if all blocks are placed
+                const allBlocksUsed = this.usedBlocks.size >= this.availableBlocks.length;
+                const hasMatches = this.checkForMatches();
+                
+                if (allBlocksUsed && !hasMatches) {
+                    setTimeout(() => {
+                        this.gameOver();
+                    }, 1500);
+                }
+            }
+
+            checkForMatches() {
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (this.grid[y][x] !== -1) {
+                            const connected = this.findConnectedBlocks(x, y, this.grid[y][x]);
+                            if (connected.length >= 3) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            gameOver() {
+                this.gameActive = false;
+                this.finalScoreDisplay.textContent = this.score;
+                this.finalLevelDisplay.textContent = this.level;
+                this.finalMatchesDisplay.textContent = this.matchesMade;
+                this.gameOverScreen.style.display = 'flex';
+            }
+
+            updateUI() {
+                this.scoreDisplay.textContent = this.score;
+                this.levelDisplay.textContent = this.level;
+            }
+
+            updateGameStatus(message) {
+                this.gameStatus.textContent = message;
+            }
+
+            animateGameStart() {
+                const cells = this.gameGrid.querySelectorAll('.grid-cell');
+                cells.forEach((cell, index) => {
+                    cell.style.opacity = '0';
+                    cell.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        cell.style.transition = 'all 0.3s ease';
+                        cell.style.opacity = '1';
+                        cell.style.transform = 'scale(1)';
+                    }, index * 20);
+                });
+
+                const blocks = this.availableBlocksContainer.querySelectorAll('.available-block');
+                blocks.forEach((block, index) => {
+                    block.style.opacity = '0';
+                    block.style.transform = 'translateY(50px)';
+                    setTimeout(() => {
+                        block.style.transition = 'all 0.5s ease';
+                        block.style.opacity = '1';
+                        block.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }
+
+            darkenColor(color) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = -40;
+                const R = (num >> 16) + amt;
+                const G = ((num >> 8) & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                
+                return '#' + (
+                    0x1000000 +
+                    (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+                    (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+                    (B < 255 ? (B < 1 ? 0 : B) : 255)
+                ).toString(16).slice(1);
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', () => {
+            new BlockBlastPremium();
+        });
+    </script>
+</body>
+</html>
